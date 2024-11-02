@@ -17,6 +17,8 @@ void setup()
 Serial.begin(115200);
 ss.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin, false);
 Serial.println(TinyGPSPlus::libraryVersion());
+lcd.setCursor(0, 0);
+lcd.print("No GPS Signal...");
 }
 
 void loop()
@@ -35,17 +37,13 @@ while(true);
 
 void displayInfo()
 {
-Serial.print(F("Location: "));
-if (gps.location.isValid())
-{
-Serial.print(gps.location.lat(), 6);
-Serial.print(F(","));
-Serial.print(gps.location.lng(), 6);
-}
-else
-{
-Serial.print(F("INVALID"));
-}
+if(gps.location.isUpdated()){
+    lcd.clear(); 
+    lcd.setCursor(0, 0);
+    lcd.print(gps.location.lat(), 6);
+    lcd.setCursor(0, 1);
+    lcd.print(gps.location.lng(), 6);
+  }
 
 Serial.println();
 }
