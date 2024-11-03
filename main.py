@@ -3,6 +3,12 @@
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
+#include <WiFi.h> // นำเข้าไลบรารี่ WiFi
+#include <ArtronShop_LineNotify.h> // นำเข้าไลบารี่ ArtronShop_LineNotify
+
+const char* ssid = "realme 12 5G"; // ชื่อ WiFi
+const char* password = "2550172550"; // รหัสผ่าน WiFi
+#define LINE_TOKEN "Q95BudUaJlzNs1eWyicvmTThCATyHiUGI4HMP6bfKzs" // LINE Token
 
 #define RXPin (16)
 #define TXPin (17)
@@ -28,6 +34,7 @@ int waypoint_index = 0;
 bool recording = false;    // Start with recording off
 TinyGPSPlus gps;
 HardwareSerial ss(2);
+bool GPS_Signal = false;
 
 double lastLat = 0.0;
 double lastLng = 0.0;
@@ -103,6 +110,44 @@ void setup() {
     }
     Serial.println("SD Card initialized.");
     
+    Serial.println();
+    Serial.println("******************************************************");
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+
+    WiFi.begin(ssid, password); // เริ่มต้นเชื่อมต่อ WiFi
+
+    while (WiFi.status() != WL_CONNECTED) { // วนลูปหากยังเชื่อมต่อ WiFi ไม่สำเร็จ
+      delay(500);
+      Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    LINE.begin(LINE_TOKEN); // เริ่มต้นใช้ LINE Notify
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Wait For GPS");
+    lcd.setCursor(0,1);
+    lcd.print("GPS SAT COUNT:");
+
+    while(!GPS_Signal){
+      if (ss.available() > 0){
+        if (gps.encode(ss.read())) {
+          if(gps.satellites.value() > 5){
+            GPS_Signal = true;
+          }else{
+            lcd.setCursor(14,1);
+            lcd.print(gps.satellites.value());
+            Serial.println(gps.satellites.value());
+          }
+        }
+      }
+    }
     // Initialize button
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     lcd.clear();
@@ -160,6 +205,17 @@ void loop() {
                 if (currentLat != lastLat || currentLng != lastLng) {
                     waypoint_index += 1;
                     lcd.clear();
+                    if(waypoint_index % 10 = 0){
+                      String latitude = String(gps.location.lat(), 6);
+                      String longitude = String(gps.location.lng(), 6);
+                      String googleMapLink = "https://www.google.com/maps/place/" + latitude + "," + longitude;
+
+                      if (LINE.send(googleMapLink)) {  // ถ้าส่งข้อความ "รถโดนขโมย" ไปที่ LINE สำเร็จ
+                        Serial.println("Send notify successful"); // ส่งข้อความ "Send notify successful" ไปที่ Serial Monitor
+                      } else { // ถ้าส่งไม่สำเร็จ
+                        Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code); // ส่งข้อความ "Send notify fail" ไปที่ Serial Monitor
+                      }
+                    }
                     if(waypoint_index % 10 <= 5){
                       if (gps.date.isValid()) {
                         dateStr = String(gps.date.month()) + "/" + 
