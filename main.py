@@ -6,9 +6,9 @@
 #include <WiFi.h> // นำเข้าไลบรารี่ WiFi
 #include <ArtronShop_LineNotify.h> // นำเข้าไลบารี่ ArtronShop_LineNotify
 
-const char* ssid = "realme 12 5G"; // ชื่อ WiFi
-const char* password = "2550172550"; // รหัสผ่าน WiFi
-#define LINE_TOKEN "Q95BudUaJlzNs1eWyicvmTThCATyHiUGI4HMP6bfKzs" // LINE Token
+const char* ssid = "realme 12 5G"; // CHANGE WIFI USERNAME
+const char* password = "2550172550"; // CHANGE WIFI PASSWORD
+#define LINE_TOKEN "Q95BudUaJlzNs1eWyicvmTThCATyHiUGI4HMP6bfKzs" // CHANGE LINE TOKEN
 
 #define RXPin (16)
 #define TXPin (17)
